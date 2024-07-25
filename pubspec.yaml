@@ -15,6 +15,9 @@ dependencies:
   firebase_auth: ^5.1.2
   logger: ^2.3.0
   emoji_picker_flutter: ^2.2.0
+  device_info_plus: ^10.1.0
+  uuid: ^4.4.2
+  shared_preferences: ^2.2.3
 
 dev_dependencies:
   flutter_test:
