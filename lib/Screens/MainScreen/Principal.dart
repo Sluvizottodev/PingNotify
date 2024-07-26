@@ -4,9 +4,11 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:provider/provider.dart';
+import '../../Service/TagProvider.dart';
 import '../../Service/ntfyService.dart';
 import '../../utils/constants/colors.dart';
-import '../../utils/constants/routes.dart'; // Certifique-se de que isso está correto
+import '../../utils/constants/routes.dart';
 
 class PrincipalScreen extends StatefulWidget {
   @override
@@ -17,13 +19,16 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final NtfyService _ntfyService = NtfyService();
   List<Map<String, dynamic>> _notifications = [];
-  Set<String> _userTags = Set<String>();
   late String _deviceId;
 
   @override
   void initState() {
     super.initState();
-    _initializeDeviceId();
+    _initializeApp();
+  }
+
+  Future<void> _initializeApp() async {
+    await _initializeDeviceId();
     _initializeNotifications();
   }
 
@@ -32,12 +37,10 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
     _deviceId = prefs.getString('device_id') ?? '';
 
     if (_deviceId.isEmpty) {
-      // Generate a new UUID if not found
       _deviceId = Uuid().v4();
       await prefs.setString('device_id', _deviceId);
     }
 
-    // Fetch user tags and notifications after getting device ID
     await _fetchUserTags();
   }
 
@@ -51,7 +54,6 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       Navigator.pushNamed(context, PageRoutes.messageDetail, arguments: message);
     });
 
-    // Também escuta notificações enquanto o app está em background ou fechado
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
 
@@ -61,10 +63,8 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       if (userDoc.exists) {
         final userData = userDoc.data();
         final tags = List<String>.from(userData?['tags'] ?? []);
-        setState(() {
-          _userTags = tags.toSet();
-        });
-        _fetchNotifications(); // Recarrega as notificações após obter as tags do usuário
+        Provider.of<TagProvider>(context, listen: false).setSelectedTags(tags.toSet());
+        await _fetchNotifications();
       }
     } catch (e) {
       print('Erro ao buscar tags do usuário: $e');
@@ -73,12 +73,15 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   Future<void> _fetchNotifications() async {
     try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
       final notificationsSnapshot = await FirebaseFirestore.instance
           .collection('notifications')
-          .where('tag', whereIn: _userTags.toList()) // Filtrar por tags
+          .where('tag', whereIn: tagProvider.selectedTags.toList())
           .orderBy('timestamp', descending: true)
           .get();
-      final notifications = notificationsSnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      final notifications = notificationsSnapshot.docs
+          .map((doc) => doc.data() as Map<String, dynamic>)
+          .toList();
       print('Notificações recebidas do servidor: $notifications');
       setState(() {
         _notifications = notifications;
@@ -89,17 +92,18 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   }
 
   void _handleNotification(RemoteMessage message) {
+    final notification = {
+      'title': message.notification?.title ?? 'Sem título',
+      'message': message.notification?.body ?? 'Sem mensagem',
+      'timestamp': DateTime.now().toString(),
+      'priority': message.data['priority'] ?? 'normal',
+      'tag': message.data['tag'] ?? 'unknown',
+    };
+
     setState(() {
-      _notifications.insert(0, {
-        'title': message.notification?.title ?? 'Sem título',
-        'message': message.notification?.body ?? 'Sem mensagem',
-        'timestamp': DateTime.now().toString(),
-        'priority': message.data['priority'] ?? 'normal',
-        'tag': message.data['tag'] ?? 'unknown',
-      });
+      _notifications.insert(0, notification);
     });
 
-    // Save notification to Firestore
     FirebaseFirestore.instance.collection('notifications').add({
       'title': message.notification?.title ?? 'Sem título',
       'message': message.notification?.body ?? 'Sem mensagem',
@@ -136,7 +140,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
             },
           ),
         ],
-        automaticallyImplyLeading: false, // Remove a seta de retorno
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: TColors.backgroundLight,
@@ -270,7 +274,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Ensure that Flutter is initialized
   await Firebase.initializeApp();
-  // Handle the notification in the background
+  // Handle background message
+  print('Notificação recebida em segundo plano: ${message.messageId}');
 }

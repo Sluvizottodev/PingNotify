@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart'; // Adicione isso
 import 'Service/DeviceIdService.dart';
-import 'utils/constants/routes.dart'; // Certifique-se de que isso está correto
+import 'Service/TagProvider.dart'; // Certifique-se de que o caminho está correto
+import 'utils/constants/routes.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,17 +22,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Nfty App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+    return ChangeNotifierProvider(
+      create: (_) => TagProvider(), // Adicione isso para fornecer o TagProvider
+      child: MaterialApp(
+        title: 'Nfty App',
+        theme: ThemeData(
+          primarySwatch: Colors.blue,
+          visualDensity: VisualDensity.adaptivePlatformDensity,
+        ),
+        initialRoute: PageRoutes.principal, // A tela login e cadastro não estão em uso
+        onGenerateRoute: PageRoutes.generateRoute, // Use o método de geração de rotas
       ),
-      initialRoute: PageRoutes.principal, // A tela login e cadastro não estão em uso
-      onGenerateRoute: PageRoutes.generateRoute, // Use o método de geração de rotas
     );
   }
 }
-
-//XSoftware
-//X123456
