@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
 import '../constants/colors.dart';
 
+///UTILIZADOS EM LOGIN E CADASTRO
 class TituloPadrao extends StatelessWidget {
   final String titulo;
   final double distanciaDoTopo;

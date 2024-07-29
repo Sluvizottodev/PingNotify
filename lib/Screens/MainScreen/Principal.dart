@@ -7,8 +7,11 @@ import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
 import '../../Service/TagProvider.dart';
 import '../../Service/ntfyService.dart';
+import '../../utils/componentes/NotificationCard.dart';
+import '../../utils/componentes/NotificationsModal.dart';
 import '../../utils/constants/colors.dart';
 import '../../utils/constants/routes.dart';
+import 'package:web_socket_channel/web_socket_channel.dart';
 
 class PrincipalScreen extends StatefulWidget {
   @override
@@ -18,6 +21,7 @@ class PrincipalScreen extends StatefulWidget {
 class _PrincipalScreenState extends State<PrincipalScreen> {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final NtfyService _ntfyService = NtfyService();
+  late WebSocketChannel _webSocketChannel;
   List<Map<String, dynamic>> _notifications = [];
   late String _deviceId;
 
@@ -25,9 +29,11 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   void initState() {
     super.initState();
     _initializeApp();
+    _initializeWebSocket();
   }
 
   Future<void> _initializeApp() async {
+    await Firebase.initializeApp();
     await _initializeDeviceId();
     _initializeNotifications();
   }
@@ -42,6 +48,28 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
     }
 
     await _fetchUserTags();
+  }
+
+  void _initializeWebSocket() {
+    _webSocketChannel = WebSocketChannel.connect(
+      Uri.parse('ws://seu-servidor-websocket.com'), // Altere para o URL do seu WebSocket
+    );
+
+    _webSocketChannel.stream.listen((message) {
+      final notification = {
+        'title': 'Nova mensagem WebSocket',
+        'message': message,
+        'timestamp': DateTime.now().toString(),
+        'priority': 'normal',
+        'tag': 'websocket',
+      };
+
+      setState(() {
+        _notifications.insert(0, notification);
+      });
+
+      FirebaseFirestore.instance.collection('notifications').add(notification);
+    });
   }
 
   void _initializeNotifications() {
@@ -59,11 +87,12 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   Future<void> _fetchUserTags() async {
     try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
       final userDoc = await FirebaseFirestore.instance.collection('users').doc(_deviceId).get();
       if (userDoc.exists) {
         final userData = userDoc.data();
         final tags = List<String>.from(userData?['tags'] ?? []);
-        Provider.of<TagProvider>(context, listen: false).setSelectedTags(tags.toSet());
+        tagProvider.setSelectedTags(tags.toSet());
         await _fetchNotifications();
       }
     } catch (e) {
@@ -104,13 +133,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       _notifications.insert(0, notification);
     });
 
-    FirebaseFirestore.instance.collection('notifications').add({
-      'title': message.notification?.title ?? 'Sem título',
-      'message': message.notification?.body ?? 'Sem mensagem',
-      'timestamp': DateTime.now(),
-      'priority': message.data['priority'] ?? 'normal',
-      'tag': message.data['tag'] ?? 'unknown',
-    });
+    FirebaseFirestore.instance.collection('notifications').add(notification);
   }
 
   IconData _getIconForPriority(String priority) {
@@ -135,8 +158,12 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
         actions: [
           IconButton(
             icon: Icon(Icons.tag, color: Colors.white),
-            onPressed: () {
-              Navigator.pushNamed(context, PageRoutes.tagSelection);
+            onPressed: () async {
+              final selectedTags = await Navigator.pushNamed(context, PageRoutes.tagSelection) as List<String>?;
+              if (selectedTags != null) {
+                Provider.of<TagProvider>(context, listen: false).setSelectedTags(selectedTags.toSet());
+                await _fetchNotifications();
+              }
             },
           ),
         ],
@@ -161,43 +188,15 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
                 child: ListView.builder(
                   itemCount: _notifications.length,
                   itemBuilder: (context, index) {
-                    return Card(
-                      elevation: 2,
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(16),
-                        leading: Icon(
-                          _getIconForPriority(_notifications[index]['priority']),
-                          color: TColors.textPrimary,
-                        ),
-                        title: Text(
-                          _notifications[index]['title'],
-                          style: TextStyle(color: TColors.textPrimary),
-                        ),
-                        subtitle: Text(
-                          _notifications[index]['message'],
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        trailing: Text(
-                          _notifications[index]['timestamp'],
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        tileColor: TColors.neutralColor,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            PageRoutes.messageDetail,
-                            arguments: _notifications[index],
-                          );
-                        },
-                      ),
-                    );
+                    return NotificationCard(notification: _notifications[index], icon: _getIconForPriority(_notifications[index]['priority']));
                   },
                 ),
               ),
               SizedBox(height: 16),
               ElevatedButton(
-                onPressed: _showNotificationsDetails,
+                onPressed: () {
+                  showNotificationsModal(context, _notifications);
+                },
                 child: Text('Mostrar Todas as Notificações'),
                 style: ElevatedButton.styleFrom(
                   foregroundColor: TColors.textWhite,
@@ -214,67 +213,9 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       ),
     );
   }
-
-  void _showNotificationsDetails() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Todas as Notificações',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.textPrimary,
-                ),
-              ),
-              SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      elevation: 2,
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(16),
-                        leading: Icon(
-                          _getIconForPriority(_notifications[index]['priority']),
-                          color: TColors.textPrimary,
-                        ),
-                        title: Text(
-                          _notifications[index]['title'],
-                          style: TextStyle(color: TColors.textPrimary),
-                        ),
-                        subtitle: Text(
-                          _notifications[index]['message'],
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        trailing: Text(
-                          _notifications[index]['timestamp'],
-                          style: TextStyle(color: Colors.black),
-                        ),
-                        tileColor: TColors.neutralColor,
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 }
 
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  // Handle background message
-  print('Notificação recebida em segundo plano: ${message.messageId}');
+  print('Notificação recebida no background: ${message.messageId}');
 }

@@ -19,6 +19,7 @@ dependencies:
   uuid: ^4.4.2
   shared_preferences: ^2.2.3
   provider: ^6.1.2
+  web_socket_channel: ^3.0.1
 
 dev_dependencies:
   flutter_test:
