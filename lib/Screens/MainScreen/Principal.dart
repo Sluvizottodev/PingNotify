@@ -1,7 +1,8 @@
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:nfty/utils/componentes/AppBarPrincipal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:provider/provider.dart';
@@ -151,24 +152,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Notificações', style: TextStyle(color: Colors.white)),
-        backgroundColor: TColors.secondaryColor,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.tag, color: Colors.white),
-            onPressed: () async {
-              final selectedTags = await Navigator.pushNamed(context, PageRoutes.tagSelection) as List<String>?;
-              if (selectedTags != null) {
-                Provider.of<TagProvider>(context, listen: false).setSelectedTags(selectedTags.toSet());
-                await _fetchNotifications();
-              }
-            },
-          ),
-        ],
-        automaticallyImplyLeading: false,
-      ),
+      appBar: AppBarPrincipal(fetchNotifications: _fetchNotifications),
       body: Container(
         color: TColors.backgroundLight,
         padding: const EdgeInsets.all(16.0),
@@ -188,7 +172,10 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
                 child: ListView.builder(
                   itemCount: _notifications.length,
                   itemBuilder: (context, index) {
-                    return NotificationCard(notification: _notifications[index], icon: _getIconForPriority(_notifications[index]['priority']));
+                    return NotificationCard(
+                      notification: _notifications[index],
+                      icon: _getIconForPriority(_notifications[index]['priority']),
+                    );
                   },
                 ),
               ),
