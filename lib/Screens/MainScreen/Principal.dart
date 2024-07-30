@@ -53,7 +53,8 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   void _initializeWebSocket() {
     _webSocketChannel = WebSocketChannel.connect(
-      Uri.parse('ws://seu-servidor-websocket.com'), // Altere para o URL do seu WebSocket
+      Uri.parse(
+          'ws://seu-servidor-websocket.com'), // Altere para o URL do seu WebSocket
     );
 
     _webSocketChannel.stream.listen((message) {
@@ -80,7 +81,8 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
     });
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Navigator.pushNamed(context, PageRoutes.messageDetail, arguments: message);
+      Navigator.pushNamed(context, PageRoutes.messageDetail,
+          arguments: message);
     });
 
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
@@ -89,7 +91,10 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   Future<void> _fetchUserTags() async {
     try {
       final tagProvider = Provider.of<TagProvider>(context, listen: false);
-      final userDoc = await FirebaseFirestore.instance.collection('users').doc(_deviceId).get();
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_deviceId)
+          .get();
       if (userDoc.exists) {
         final userData = userDoc.data();
         final tags = List<String>.from(userData?['tags'] ?? []);
@@ -159,43 +164,44 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
         child: Center(
           child: _notifications.isEmpty
               ? Text(
-            'Nenhuma notificação recebida.',
-            style: TextStyle(
-              color: TColors.textPrimary,
-              fontSize: 16,
-            ),
-          )
-              : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    return NotificationCard(
-                      notification: _notifications[index],
-                      icon: _getIconForPriority(_notifications[index]['priority']),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () {
-                  showNotificationsModal(context, _notifications);
-                },
-                child: Text('Mostrar Todas as Notificações'),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: TColors.textWhite,
-                  backgroundColor: TColors.primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                  'Nenhuma notificação recebida.',
+                  style: TextStyle(
+                    color: TColors.textPrimary,
+                    fontSize: 16,
                   ),
-                  padding: EdgeInsets.symmetric(vertical: 16),
+                )
+              : Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: ListView.builder(
+                        itemCount: _notifications.length,
+                        itemBuilder: (context, index) {
+                          return NotificationCard(
+                            notification: _notifications[index],
+                            icon: _getIconForPriority(
+                                _notifications[index]['priority']),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    ElevatedButton(
+                      onPressed: () {
+                        showNotificationsModal(context, _notifications);
+                      },
+                      child: Text('Mostrar Todas as Notificações'),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: TColors.textWhite,
+                        backgroundColor: TColors.primaryColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );

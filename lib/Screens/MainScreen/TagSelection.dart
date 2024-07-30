@@ -116,6 +116,7 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
         title: Text('Seleção de Tags', style: TextStyle(color: Colors.white)),
         backgroundColor: TColors.secondaryColor,
         elevation: 4,
+        automaticallyImplyLeading: false,
       ),
       body: Container(
         color: TColors.backgroundLight,

@@ -23,7 +23,7 @@ class AppBarPrincipal extends StatelessWidget implements PreferredSizeWidget {
           icon: Icon(Icons.slow_motion_video, color: Colors.white),
           onPressed: () {
             // Implementar a navegação para a página de configurações
-            //Navigator.pushNamed(context, PageRoutes.cursos);
+            Navigator.pushNamed(context, PageRoutes.cursos);
           },
         ),
         IconButton(

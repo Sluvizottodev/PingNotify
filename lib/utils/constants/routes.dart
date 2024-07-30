@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nfty/Screens/HomeScreen/Cadastro.dart';
 import 'package:nfty/Screens/HomeScreen/Login.dart';
 import 'package:nfty/Screens/MainScreen/Principal.dart';
+import 'package:nfty/Screens/MainScreen/Videos.dart';
 
 import '../../Screens/MainScreen/MessageDetail.dart';
 import '../../Screens/MainScreen/TagSelection.dart';
@@ -13,6 +14,7 @@ class PageRoutes {
   static const String principal = '/principal';
   static const String tagSelection = '/tag-selection'; // Adicione a nova rota
   static const String messageDetail = '/message-detail'; // Adicione a nova rota
+  static const String cursos = '/cursos';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -22,6 +24,8 @@ class PageRoutes {
         return MaterialPageRoute(builder: (_) => CadastroScreen());
       case principal:
         return MaterialPageRoute(builder: (_) => PrincipalScreen());
+      case cursos:
+        return MaterialPageRoute(builder: (_) => CursosScreen());
       case tagSelection:
         return MaterialPageRoute(builder: (_) => TagSelectionScreen());
       case messageDetail:
