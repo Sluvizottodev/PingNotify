@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/constants/colors.dart';
 import '../constants/routes.dart';
 
-///Contém o widget para exibir notificações individuais.
+/// Contém o widget para exibir notificações individuais.
 class NotificationCard extends StatelessWidget {
   final Map<String, dynamic> notification;
   final IconData icon;

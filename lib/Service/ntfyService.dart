@@ -2,32 +2,32 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class NtfyService {
-  final String _ntfyServerUrl = 'http://seu-servidor-ntfy.com'; // Altere para o URL do seu servidor Ntfy
+  final String _ntfyServerUrl = 'https://ntfy.sh'; // Base URL do servidor Ntfy
 
-  Future<void> subscribeToTopic(String topic) async {
-    final url = '$_ntfyServerUrl/subscribe/$topic';
+  Future<void> subscribeToTag(String tag) async {
+    final url = '$_ntfyServerUrl/$tag';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      print('Inscrito no tópico $topic');
+      print('Inscrito na tag $tag');
     } else {
-      print('Falha ao inscrever no tópico $topic: ${response.statusCode}');
+      print('Falha ao inscrever na tag $tag: ${response.statusCode}');
     }
   }
 
-  Future<void> unsubscribeFromTopic(String topic) async {
-    final url = '$_ntfyServerUrl/unsubscribe/$topic';
+  Future<void> unsubscribeFromTag(String tag) async {
+    final url = '$_ntfyServerUrl/$tag';
     final response = await http.get(Uri.parse(url));
 
     if (response.statusCode == 200) {
-      print('Desinscrito do tópico $topic');
+      print('Desinscrito da tag $tag');
     } else {
-      print('Falha ao desinscrever do tópico $topic: ${response.statusCode}');
+      print('Falha ao desinscrever da tag $tag: ${response.statusCode}');
     }
   }
 
-  Future<void> sendNotification(String topic, String title, String message) async {
-    final url = '$_ntfyServerUrl/$topic';
+  Future<void> sendNotification(String tag, String title, String message) async {
+    final url = '$_ntfyServerUrl/$tag';
     final response = await http.post(
       Uri.parse(url),
       headers: {'Content-Type': 'application/json'},
@@ -39,9 +39,9 @@ class NtfyService {
     );
 
     if (response.statusCode == 200) {
-      print('Notificação enviada para $topic');
+      print('Notificação enviada para a tag $tag');
     } else {
-      print('Falha ao enviar notificação para $topic: ${response.statusCode}');
+      print('Falha ao enviar notificação para a tag $tag: ${response.statusCode}');
     }
   }
 }

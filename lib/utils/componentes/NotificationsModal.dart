@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../utils/constants/colors.dart';
 import 'NotificationCard.dart';
 
-///Contém o widget para exibir todas as notificações em um modal.
+/// Contém o widget para exibir todas as notificações em um modal.
 void showNotificationsModal(BuildContext context, List<Map<String, dynamic>> notifications) {
   showModalBottomSheet(
     context: context,

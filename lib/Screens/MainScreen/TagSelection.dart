@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../Service/TagProvider.dart';
-import '../../Service/NtfyService.dart'; // Importar o serviço Ntfy
+import '../../Service/NtfyService.dart';
 import '../../utils/constants/colors.dart';
 import '../../utils/constants/routes.dart';
 
@@ -55,6 +55,7 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
   Future<void> _saveSelectedTags() async {
     try {
       final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      _selectedTags.add('test'); // Adiciona a tag "test" às tags selecionadas
       tagProvider.setSelectedTags(_selectedTags);
 
       // Salvar tags selecionadas no Firestore

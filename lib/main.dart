@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart'; // Adicione isso
+import 'package:provider/provider.dart';
 import 'Service/DeviceIdService.dart';
 import 'Service/TagProvider.dart'; // Certifique-se de que o caminho está correto
 import 'utils/constants/routes.dart';
