@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-
 import 'DeviceIdService.dart'; // Importe o DeviceIdService
 
 class TagProvider with ChangeNotifier {

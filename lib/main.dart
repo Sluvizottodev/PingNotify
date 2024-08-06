@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'Service/DeviceIdService.dart';
-import 'Service/TagProvider.dart'; // Certifique-se de que o caminho está correto
+import 'Service/TagProvider.dart';
 import 'utils/constants/routes.dart';
 
 void main() async {
@@ -23,15 +23,15 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => TagProvider(), // Adicione isso para fornecer o TagProvider
+      create: (_) => TagProvider(),
       child: MaterialApp(
         title: 'Nfty App',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        initialRoute: PageRoutes.principal, // A tela login e cadastro não estão em uso
-        onGenerateRoute: PageRoutes.generateRoute, // Use o método de geração de rotas
+        initialRoute: PageRoutes.principal,
+        onGenerateRoute: PageRoutes.generateRoute,
       ),
     );
   }

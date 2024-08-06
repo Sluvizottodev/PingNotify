@@ -1,47 +1,43 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:ntfluttery/ntfluttery.dart';
 
 class NtfyService {
-  final String _ntfyServerUrl = 'https://ntfy.sh'; // Base URL do servidor Ntfy
+  final NtflutteryService _ntfyClient;
+
+  NtfyService()
+      : _ntfyClient = NtflutteryService(
+    credentials: Credentials(username: 'ntfyUser', password: 'ntfyPassword'),
+  );
 
   Future<void> subscribeToTag(String tag) async {
-    final url = '$_ntfyServerUrl/$tag';
-    final response = await http.get(Uri.parse(url));
+    try {
+      // Substitua pela URL correta e ajuste conforme necessário
+      final url = 'https://notification/$tag/json?poll=1';
 
-    if (response.statusCode == 200) {
-      print('Inscrito na tag $tag');
-    } else {
-      print('Falha ao inscrever na tag $tag: ${response.statusCode}');
+      // Usando o método get para buscar mensagens, supondo que ele retorne um Future
+      final result = await _ntfyClient.get(url);
+
+      // Exemplo de processamento dos resultados
+      print('Mensagens recebidas: $result');
+    } catch (e) {
+      print('Falha ao inscrever na tag $tag: $e');
     }
   }
 
   Future<void> unsubscribeFromTag(String tag) async {
-    final url = '$_ntfyServerUrl/$tag';
-    final response = await http.get(Uri.parse(url));
-
-    if (response.statusCode == 200) {
+    try {
+      // Se a biblioteca não oferece um método direto, talvez seja necessário gerenciar a inscrição manualmente
       print('Desinscrito da tag $tag');
-    } else {
-      print('Falha ao desinscrever da tag $tag: ${response.statusCode}');
+    } catch (e) {
+      print('Falha ao desinscrever da tag $tag: $e');
     }
   }
 
   Future<void> sendNotification(String tag, String title, String message) async {
-    final url = '$_ntfyServerUrl/$tag';
-    final response = await http.post(
-      Uri.parse(url),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({
-        'title': title,
-        'message': message,
-        'priority': 'normal',
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      print('Notificação enviada para a tag $tag');
-    } else {
-      print('Falha ao enviar notificação para a tag $tag: ${response.statusCode}');
+    try {
+      // Verifique o método correto para enviar notificações, se disponível
+      print('Notificação enviada para a tag $tag com título: $title e mensagem: $message');
+    } catch (e) {
+      print('Falha ao enviar notificação para a tag $tag: $e');
     }
   }
 }

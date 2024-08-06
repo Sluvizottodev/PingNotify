@@ -15,6 +15,7 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
   List<String> _allTags = [];
   Set<String> _selectedTags = {};
   TextEditingController _newTagController = TextEditingController();
+  final NtfyService _ntfyService = NtfyService();
 
   @override
   void initState() {
@@ -42,12 +43,14 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
     });
   }
 
-  void _toggleTagSelection(String tag) {
+  void _toggleTagSelection(String tag) async {
     setState(() {
       if (_selectedTags.contains(tag)) {
         _selectedTags.remove(tag);
+        _ntfyService.unsubscribeFromTag(tag);
       } else {
         _selectedTags.add(tag);
+        _ntfyService.subscribeToTag(tag);
       }
     });
   }
@@ -55,18 +58,12 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
   Future<void> _saveSelectedTags() async {
     try {
       final tagProvider = Provider.of<TagProvider>(context, listen: false);
-      _selectedTags.add('test'); // Adiciona a tag "test" às tags selecionadas
       tagProvider.setSelectedTags(_selectedTags);
 
-      // Salvar tags selecionadas no Firestore
       await FirebaseFirestore.instance.collection('users').doc(tagProvider.deviceId).set({
         'tags': _selectedTags.toList(),
       });
 
-      // Obter e enviar notificações
-      await _handleNotifications();
-
-      // Substituir a tela atual pela tela principal
       Navigator.pushReplacementNamed(context, PageRoutes.principal);
     } catch (e) {
       print('Erro ao salvar tags selecionadas: $e');
@@ -84,30 +81,11 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
     }
   }
 
-  Future<void> _handleNotifications() async {
-    final ntfyService = NtfyService();
-    final threeMonthsAgo = DateTime.now().subtract(Duration(days: 90));
-
-    for (final tag in _selectedTags) {
-      // Enviar notificação para a nova tag
-      await ntfyService.sendNotification(tag, 'Nova Tag Selecionada', 'Você selecionou a tag $tag');
-
-      // Recuperar notificações passadas relacionadas à tag
-      final notificationsSnapshot = await FirebaseFirestore.instance
-          .collection('notifications')
-          .where('tag', isEqualTo: tag)
-          .where('timestamp', isGreaterThanOrEqualTo: threeMonthsAgo)
-          .get();
-
-      for (final doc in notificationsSnapshot.docs) {
-        final notification = doc.data();
-        final title = notification['title'];
-        final message = notification['message'];
-
-        // Enviar notificação para o usuário sobre notificações passadas
-        await ntfyService.sendNotification(tag, title, message);
-      }
-    }
+  void _removeTag(String tag) {
+    setState(() {
+      _selectedTags.remove(tag);
+      _ntfyService.unsubscribeFromTag(tag);
+    });
   }
 
   @override
@@ -144,6 +122,28 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
                   onPressed: _addNewTag,
                 ),
               ),
+            ),
+            SizedBox(height: 16),
+            Text(
+              'Tags selecionadas:',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: TColors.textPrimary,
+              ),
+            ),
+            SizedBox(height: 8),
+            Wrap(
+              spacing: 8.0,
+              runSpacing: 4.0,
+              children: _selectedTags.map((tag) {
+                return Chip(
+                  label: Text(tag),
+                  onDeleted: () => _removeTag(tag),
+                  backgroundColor: TColors.primaryColor.withOpacity(0.2),
+                  deleteIconColor: TColors.primaryColor,
+                );
+              }).toList(),
             ),
             SizedBox(height: 16),
             Expanded(
