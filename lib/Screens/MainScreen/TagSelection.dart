@@ -28,6 +28,7 @@ class _TagSelectionScreenState extends State<TagSelectionScreen> {
     try {
       final tagsSnapshot = await FirebaseFirestore.instance.collection('tags').get();
       final tags = tagsSnapshot.docs.map((doc) => doc.id).toList();
+      print('Tags encontradas: $tags');
       setState(() {
         _allTags = tags;
       });

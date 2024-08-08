@@ -5,7 +5,7 @@ class NtfyService {
 
   NtfyService()
       : _ntfyClient = NtflutteryService(
-    credentials: Credentials(username: 'ntfyUser', password: 'ntfyPassword'),
+    credentials: Credentials(username: 'XSoftware', password: 'X123456'),
   );
 
   Future<void> subscribeToTag(String tag) async {
