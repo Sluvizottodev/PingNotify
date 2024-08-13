@@ -23,15 +23,15 @@ class NotificationCard extends StatelessWidget {
           color: TColors.textPrimary,
         ),
         title: Text(
-          notification['title'],
+          notification['title'] ?? 'No Title',
           style: TextStyle(color: TColors.textPrimary),
         ),
         subtitle: Text(
-          notification['message'],
+          notification['message'] ?? 'No Message',
           style: TextStyle(color: Colors.black),
         ),
         trailing: Text(
-          notification['timestamp'],
+          notification['timestamp'] ?? 'No Timestamp',
           style: TextStyle(color: Colors.black),
         ),
         tileColor: TColors.neutralColor,
