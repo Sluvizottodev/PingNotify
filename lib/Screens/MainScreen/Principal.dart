@@ -85,7 +85,18 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
           .where('tags', arrayContainsAny: tagProvider.selectedTags.toList())
           .orderBy('timestamp', descending: true)
           .get();
-      final notifications = querySnapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      final notifications = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        // Converter o timestamp de Firebase Timestamp para uma string formatada
+        final Timestamp timestamp = data['timestamp'] as Timestamp;
+        final DateTime dateTime = timestamp.toDate();
+        final String formattedDate = dateTime.toString(); // ou use DateFormat para formatar a data
+        return {
+          ...data,
+          'timestamp': formattedDate,
+        };
+      }).toList();
+
       setState(() {
         _notifications = notifications;
       });
@@ -103,26 +114,32 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
     return Scaffold(
       appBar: AppBarPrincipal(fetchNotifications: _fetchNotifications),
       backgroundColor: TColors.backgroundLight,
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: _notifications.length,
-              itemBuilder: (context, index) {
-                final notification = _notifications[index];
-                return NotificationCard(
-                  notification: notification,
-                  icon: Icons.notifications,
-                );
-              },
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: ListView.builder(
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = _notifications[index];
+                  return NotificationCard(
+                    notification: notification,
+                    icon: Icons.notifications,
+                  );
+                },
+              ),
             ),
-          ),
-          FloatingActionButton(
-            onPressed: _showNotificationsModal,
-            backgroundColor: TColors.primaryColor,
-            child: Icon(Icons.notifications, color: Colors.white),
-          ),
-        ],
+            Positioned(
+              bottom: 16,
+              right: 16,
+              child: FloatingActionButton(
+                onPressed: _showNotificationsModal,
+                backgroundColor: TColors.primaryColor,
+                child: Icon(Icons.notifications, color: Colors.white),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
