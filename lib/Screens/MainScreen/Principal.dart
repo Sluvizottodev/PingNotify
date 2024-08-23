@@ -23,21 +23,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   void initState() {
     super.initState();
     _ntfyService = NtfyService();
-    _webSocketService = WebSocketService('wss://ntfy.sh/test/ws'); // Conectar ao WebSocket do Ntfy
-
-    _initializeApp();
-
-    // Ouvir mensagens do WebSocket e atualizar o estado
-    _webSocketService.messages.listen((message) {
-      print('Mensagem recebida via WebSocket: $message'); // Log da mensagem recebida
-      setState(() {
-        _notifications.add({
-          'title': 'Nova Notificação',
-          'message': message,
-          'timestamp': DateTime.now().toString(),
-        });
-      });
-    });
+    _initializeApp().then((_) => _initializeWebSocketService());
   }
 
   @override
@@ -69,12 +55,27 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   Future<void> _subscribeToTags() async {
     try {
       final tagProvider = Provider.of<TagProvider>(context, listen: false);
-      for (final tag in tagProvider.selectedTags) {
-        await _ntfyService.subscribeToTag(tag);
-      }
+      await _ntfyService.subscribeToTags(tagProvider.selectedTags.toList());
     } catch (e) {
       print('Erro ao inscrever-se nas tags: $e');
     }
+  }
+
+  void _initializeWebSocketService() {
+    final tagProvider = Provider.of<TagProvider>(context, listen: false);
+    final urls = tagProvider.selectedTags.map((tag) => 'wss://ntfy.sh/$tag/ws').toList();
+    _webSocketService = WebSocketService(urls);
+
+    _webSocketService.messages.listen((message) {
+      print('Mensagem recebida via WebSocket: $message');
+      setState(() {
+        _notifications.add({
+          'title': 'Nova Notificação',
+          'message': message,
+          'timestamp': DateTime.now().toString(),
+        });
+      });
+    });
   }
 
   Future<void> _fetchNotifications() async {
@@ -87,10 +88,9 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
           .get();
       final notifications = querySnapshot.docs.map((doc) {
         final data = doc.data();
-        // Converter o timestamp de Firebase Timestamp para uma string formatada
         final Timestamp timestamp = data['timestamp'] as Timestamp;
         final DateTime dateTime = timestamp.toDate();
-        final String formattedDate = dateTime.toString(); // ou use DateFormat para formatar a data
+        final String formattedDate = dateTime.toString();
         return {
           ...data,
           'timestamp': formattedDate,

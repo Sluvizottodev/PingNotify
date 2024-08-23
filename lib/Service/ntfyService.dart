@@ -20,6 +20,12 @@ class NtfyService {
     }
   }
 
+  Future<void> subscribeToTags(List<String> tags) async {
+    for (String tag in tags) {
+      await subscribeToTag(tag); // Chama o método para cada tag
+    }
+  }
+
   Future<void> unsubscribeFromTag(String tag) async {
     try {
       print('Desinscrito da tag $tag');
