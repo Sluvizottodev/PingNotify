@@ -30,6 +30,10 @@ class NotificationCard extends StatelessWidget {
 
     String formattedDate = timestamp != null ? formatter.format(timestamp) : 'Data desconhecida';
 
+    // Limite de caracteres para a mensagem
+    final String message = notification['message'] ?? 'Sem Mensagem';
+    final String displayMessage = message.length > 50 ? '${message.substring(0, 50)}...' : message;
+
     return Card(
       elevation: 2,
       margin: EdgeInsets.symmetric(vertical: 8),
@@ -50,7 +54,7 @@ class NotificationCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              notification['message'] ?? 'Sem Mensagem',
+              displayMessage,
               style: TextStyle(color: Colors.black),
             ),
             SizedBox(height: 4),
@@ -61,6 +65,17 @@ class NotificationCard extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
+            if (message.length > 50) // Exibe o botão apenas se a mensagem foi cortada
+              TextButton(
+                onPressed: () {
+                  Navigator.pushNamed(
+                    context,
+                    PageRoutes.messageDetail,
+                    arguments: notification,
+                  );
+                },
+                child: Text('Ver Detalhes'),
+              ),
           ],
         ),
         tileColor: TColors.neutralColor,

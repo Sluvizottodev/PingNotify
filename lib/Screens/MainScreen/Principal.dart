@@ -1,4 +1,5 @@
 import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +37,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   Future<void> _initializeApp() async {
     await _fetchUserTags();
     await _subscribeToTags();
-    await _fetchNotifications();
+    await _fetchNotifications(); // Chamada para buscar notificações antigas
   }
 
   Future<void> _fetchUserTags() async {
@@ -71,23 +72,42 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       print('Mensagem recebida via WebSocket: $message');
 
       try {
-        // Decodificar a mensagem JSON em um mapa
         final decodedMessage = jsonDecode(message) as Map<String, dynamic>;
         final extractedMessage = decodedMessage['message'] ?? 'Sem Mensagem';
+        final eventType = decodedMessage['event'] ?? ''; // Verifique o tipo de evento
+        final timestamp = DateTime.now().toUtc().add(Duration(hours: -3)); // Ajuste para horário de Brasília
 
-        setState(() {
-          _notifications.add({
-            'title': 'Nova Notificação',
-            'message': extractedMessage,
-            'timestamp': DateTime.now().millisecondsSinceEpoch,
+        // Apenas adicionar mensagens que não sejam do tipo "open"
+        if (eventType != 'open') {
+          setState(() {
+            _notifications.insert(0, { // Inserindo no topo da lista
+              'title': 'Nova Notificação',
+              'message': extractedMessage,
+              'timestamp': timestamp.millisecondsSinceEpoch,
+            });
           });
-        });
+
+          // Salvar a notificação no Firestore
+          _saveNotificationToFirestore('Nova Notificação', extractedMessage, timestamp);
+        }
       } catch (e) {
         print('Erro ao decodificar a mensagem: $e');
       }
     });
   }
 
+  Future<void> _saveNotificationToFirestore(String title, String message, DateTime timestamp) async {
+    try {
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'title': title,
+        'message': message,
+        'timestamp': Timestamp.fromDate(timestamp),
+        'tags': Provider.of<TagProvider>(context, listen: false).selectedTags.toList(), // Adicionando tags
+      });
+    } catch (e) {
+      print('Erro ao salvar notificação no Firestore: $e');
+    }
+  }
 
   Future<void> _fetchNotifications() async {
     try {
@@ -97,12 +117,13 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
           .where('tags', arrayContainsAny: tagProvider.selectedTags.toList())
           .orderBy('timestamp', descending: true)
           .get();
+
       final notifications = querySnapshot.docs.map((doc) {
         final data = doc.data();
         final Timestamp timestamp = data['timestamp'] as Timestamp;
         return {
           ...data,
-          'timestamp': timestamp.toDate().millisecondsSinceEpoch, // Convertido para int
+          'timestamp': timestamp.toDate().millisecondsSinceEpoch,
         };
       }).toList();
 
