@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -68,15 +69,25 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
     _webSocketService.messages.listen((message) {
       print('Mensagem recebida via WebSocket: $message');
-      setState(() {
-        _notifications.add({
-          'title': 'Nova Notificação',
-          'message': message,
-          'timestamp': DateTime.now().toString(),
+
+      try {
+        // Decodificar a mensagem JSON em um mapa
+        final decodedMessage = jsonDecode(message) as Map<String, dynamic>;
+        final extractedMessage = decodedMessage['message'] ?? 'Sem Mensagem';
+
+        setState(() {
+          _notifications.add({
+            'title': 'Nova Notificação',
+            'message': extractedMessage,
+            'timestamp': DateTime.now().millisecondsSinceEpoch,
+          });
         });
-      });
+      } catch (e) {
+        print('Erro ao decodificar a mensagem: $e');
+      }
     });
   }
+
 
   Future<void> _fetchNotifications() async {
     try {
@@ -89,11 +100,9 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       final notifications = querySnapshot.docs.map((doc) {
         final data = doc.data();
         final Timestamp timestamp = data['timestamp'] as Timestamp;
-        final DateTime dateTime = timestamp.toDate();
-        final String formattedDate = dateTime.toString();
         return {
           ...data,
-          'timestamp': formattedDate,
+          'timestamp': timestamp.toDate().millisecondsSinceEpoch, // Convertido para int
         };
       }).toList();
 
@@ -127,15 +136,6 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
                     icon: Icons.notifications,
                   );
                 },
-              ),
-            ),
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: FloatingActionButton(
-                onPressed: _showNotificationsModal,
-                backgroundColor: TColors.primaryColor,
-                child: Icon(Icons.notifications, color: Colors.white),
               ),
             ),
           ],

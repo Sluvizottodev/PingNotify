@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../utils/constants/colors.dart';
 
 class MessageDetailScreen extends StatelessWidget {
@@ -10,11 +11,26 @@ class MessageDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final mediaQuery = MediaQuery.of(context);
 
+    String displayMessage = notification['message'] ?? 'Sem mensagem';
+
+    DateTime? timestamp;
+    if (notification['timestamp'] is String) {
+      try {
+        timestamp = DateTime.parse(notification['timestamp']);
+      } catch (e) {
+        timestamp = null;
+      }
+    } else if (notification['timestamp'] is int) {
+      timestamp = DateTime.fromMillisecondsSinceEpoch(notification['timestamp']);
+    }
+
+    String formattedDate = timestamp != null ? DateFormat('dd/MM/yyyy HH:mm').format(timestamp) : 'Data desconhecida';
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
           'Detalhes da Notificação',
-          style: TextStyle(
+          style: TextStyle( color: TColors.textWhite,
             fontSize: mediaQuery.size.width * 0.05, // Tamanho de fonte responsivo
           ),
         ),
@@ -34,27 +50,27 @@ class MessageDetailScreen extends StatelessWidget {
                 color: TColors.textPrimary,
               ),
             ),
-            SizedBox(height: mediaQuery.size.height * 0.01), // Espaçamento proporcional à altura da tela
+            SizedBox(height: mediaQuery.size.height * 0.01),
             Text(
-              notification['message'] ?? 'Sem mensagem',
+              displayMessage,
               style: TextStyle(
-                fontSize: mediaQuery.size.width * 0.04, // Tamanho de fonte responsivo
+                fontSize: mediaQuery.size.width * 0.04,
                 color: TColors.textPrimary,
               ),
             ),
-            SizedBox(height: mediaQuery.size.height * 0.02), // Espaçamento proporcional à altura da tela
+            SizedBox(height: mediaQuery.size.height * 0.02),
             Text(
-              'Recebido em: ${notification['timestamp'] ?? 'Desconhecido'}',
+              'Recebido em: $formattedDate',
               style: TextStyle(
-                fontSize: mediaQuery.size.width * 0.03, // Tamanho de fonte responsivo
+                fontSize: mediaQuery.size.width * 0.03,
                 color: Colors.black54,
               ),
             ),
-            SizedBox(height: mediaQuery.size.height * 0.01), // Espaçamento proporcional à altura da tela
+            SizedBox(height: mediaQuery.size.height * 0.01),
             Text(
               'Prioridade: ${notification['priority'] ?? 'Normal'}',
               style: TextStyle(
-                fontSize: mediaQuery.size.width * 0.03, // Tamanho de fonte responsivo
+                fontSize: mediaQuery.size.width * 0.03,
                 color: Colors.black54,
               ),
             ),
