@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -11,6 +10,8 @@ import '../../utils/componentes/NotificationCard.dart';
 import '../../utils/componentes/NotificationsModal.dart';
 import '../../utils/constants/colors.dart';
 
+///PRA RECEBER PRECISA DE 1 DISPOSITIVO ABERTO NO APP COM A TAG
+//Não está sendo publicado mais que 1 vez!
 class PrincipalScreen extends StatefulWidget {
   @override
   _PrincipalScreenState createState() => _PrincipalScreenState();
@@ -37,7 +38,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
   Future<void> _initializeApp() async {
     await _fetchUserTags();
     await _subscribeToTags();
-    await _fetchNotifications(); // Chamada para buscar notificações antigas
+    await _fetchNotifications(); // Busca notificações armazenadas no Firestore
   }
 
   Future<void> _fetchUserTags() async {
@@ -74,10 +75,9 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       try {
         final decodedMessage = jsonDecode(message) as Map<String, dynamic>;
         final extractedMessage = decodedMessage['message'] ?? 'Sem Mensagem';
-        final eventType = decodedMessage['event'] ?? ''; // Verifique o tipo de evento
-        final timestamp = DateTime.now().toUtc().add(Duration(hours: -3)); // Ajuste para horário de Brasília
+        final eventType = decodedMessage['event'] ?? '';
+        final timestamp = DateTime.now().toUtc().add(Duration(hours: -3)); // Horário de Brasília
 
-        // Apenas adicionar mensagens que não sejam do tipo "open"
         if (eventType != 'open') {
           setState(() {
             _notifications.insert(0, { // Inserindo no topo da lista
@@ -98,6 +98,19 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   Future<void> _saveNotificationToFirestore(String title, String message, DateTime timestamp) async {
     try {
+      // Verificar se a mensagem já existe no Firestore
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('message', isEqualTo: message)
+          .get();
+
+      // Se a mensagem já existe, não salva novamente
+      if (querySnapshot.docs.isNotEmpty) {
+        print('Mensagem já existe no Firestore. Não salvando novamente.');
+        return;
+      }
+
+      // Caso contrário, salva a nova notificação
       await FirebaseFirestore.instance.collection('notifications').add({
         'title': title,
         'message': message,
@@ -161,6 +174,10 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _showNotificationsModal,
+        child: Icon(Icons.notifications),
       ),
     );
   }

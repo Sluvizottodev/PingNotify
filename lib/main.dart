@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'Service/DeviceIdService.dart';
+import 'Service/NotificationFireSevice.dart';
 import 'Service/TagProvider.dart';
 import 'utils/constants/routes.dart';
 
@@ -11,6 +12,12 @@ void main() async {
 
   String deviceId = await DeviceIdService.getDeviceId();
   print('ID do dispositivo: $deviceId'); // Para depuração, remova em produção
+
+  // Inicializa o serviço de notificação
+  NotificationService notificationService = NotificationService();
+  await notificationService.initialize().catchError((error){
+    print('Erro ao inicializar o serviço de notificação: $error');
+  });
 
   runApp(MyApp(deviceId: deviceId));
 }

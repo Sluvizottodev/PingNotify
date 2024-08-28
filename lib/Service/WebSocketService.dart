@@ -14,6 +14,7 @@ class WebSocketService {
         _messageController.add(message);
       }, onError: (error) {
         print('Erro no WebSocket: $error');
+        _reconnect(channel, url);
       });
     }
   }
@@ -25,5 +26,18 @@ class WebSocketService {
       channel.sink.close();
     }
     _messageController.close();
+  }
+
+  void _reconnect(WebSocketChannel channel, String url) async {
+    await Future.delayed(Duration(seconds: 5)); // Aguardar antes de tentar reconectar
+    _channels.remove(channel);
+    final newChannel = WebSocketChannel.connect(Uri.parse(url));
+    _channels.add(newChannel);
+    newChannel.stream.listen((message) {
+      _messageController.add(message);
+    }, onError: (error) {
+      print('Erro na reconexão do WebSocket: $error');
+      _reconnect(newChannel, url);
+    });
   }
 }
