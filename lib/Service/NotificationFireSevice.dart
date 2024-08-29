@@ -6,7 +6,6 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _flutterLocalNotificationsPlugin = FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
-    // Configurações para Android e iOS
     const AndroidInitializationSettings initializationSettingsAndroid =
     AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -16,7 +15,6 @@ class NotificationService {
 
     await _flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
-    // Solicitar permissão para iOS
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -29,19 +27,16 @@ class NotificationService {
       print('Permissão negada');
     }
 
-    // Lidar com mensagens em primeiro plano
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       print('Recebeu uma mensagem em primeiro plano: ${message.messageId}');
       _showNotification(message);
     });
 
-    // Lidar com mensagens em segundo plano
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       print('Mensagem aberta a partir da notificação: ${message.messageId}');
       _handleMessage(message);
     });
 
-    // Obter o token de FCM
     String? token = await _firebaseMessaging.getToken();
     print('FCM Token: $token');
   }
@@ -71,7 +66,6 @@ class NotificationService {
 
   void _handleMessage(RemoteMessage message) {
     // Ações específicas quando o usuário abre o app a partir de uma notificação
-    // Você pode navegar para uma página específica ou executar outras ações
   }
 
   Future<void> subscribeToTags(List<String> tags) async {

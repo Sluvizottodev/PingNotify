@@ -175,10 +175,6 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showNotificationsModal,
-        child: Icon(Icons.notifications),
-      ),
     );
   }
 }

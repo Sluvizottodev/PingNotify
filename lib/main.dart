@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'Service/DeviceIdService.dart';
 import 'Service/NotificationFireSevice.dart';
 import 'Service/TagProvider.dart';
@@ -18,6 +19,15 @@ void main() async {
   await notificationService.initialize().catchError((error){
     print('Erro ao inicializar o serviço de notificação: $error');
   });
+
+  // Solicitar permissão para notificações
+  NotificationSettings settings = await FirebaseMessaging.instance.requestPermission(
+    alert: true,
+    badge: true,
+    sound: true,
+  );
+
+  print('Permissão para notificações: ${settings.authorizationStatus}');
 
   runApp(MyApp(deviceId: deviceId));
 }

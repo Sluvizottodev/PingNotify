@@ -1,43 +1,62 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketService {
-  final List<WebSocketChannel> _channels = [];
-  final StreamController<String> _messageController = StreamController<String>();
+  final List<String> urls;
+  late final List<WebSocketChannel> _channels = [];
+  late StreamController<String> _messageStreamController;
+  int _reconnectAttempts = 0;
 
-  WebSocketService(List<String> urls) {
-    for (final url in urls) {
-      final channel = WebSocketChannel.connect(Uri.parse(url));
-      _channels.add(channel);
+  WebSocketService(this.urls) {
+    _messageStreamController = StreamController<String>.broadcast();
+    _initializeChannels();
+  }
 
-      channel.stream.listen((message) {
-        _messageController.add(message);
-      }, onError: (error) {
-        print('Erro no WebSocket: $error');
-        _reconnect(channel, url);
-      });
+  Stream<String> get messages => _messageStreamController.stream;
+
+  void _initializeChannels() {
+    for (String url in urls) {
+      _connect(url);
     }
   }
 
-  Stream<String> get messages => _messageController.stream;
+  void _connect(String url) {
+    final channel = WebSocketChannel.connect(Uri.parse(url));
+    _channels.add(channel);
+
+    channel.stream.listen(
+          (message) {
+        _reconnectAttempts = 0; // Reset de tentativas na primeira mensagem
+        _messageStreamController.add(message);
+      },
+      onError: (error) {
+        print('Erro na conexão do WebSocket ($url): $error');
+        _reconnectWithBackoff(url);
+      },
+      onDone: () {
+        print('Conexão fechada ($url)');
+        _reconnectWithBackoff(url);
+      },
+    );
+  }
+
+  void _reconnectWithBackoff(String url) {
+    final backoffTime = _calculateBackoffTime();
+    _reconnectAttempts += 1;
+    print('Tentando reconectar em $backoffTime segundos...');
+
+    Future.delayed(Duration(seconds: backoffTime), () => _connect(url));
+  }
+
+  int _calculateBackoffTime() {
+    return (_reconnectAttempts > 5) ? 60 : (2 ^ _reconnectAttempts) - 1;
+  }
 
   void dispose() {
     for (final channel in _channels) {
       channel.sink.close();
     }
-    _messageController.close();
-  }
-
-  void _reconnect(WebSocketChannel channel, String url) async {
-    await Future.delayed(Duration(seconds: 5)); // Aguardar antes de tentar reconectar
-    _channels.remove(channel);
-    final newChannel = WebSocketChannel.connect(Uri.parse(url));
-    _channels.add(newChannel);
-    newChannel.stream.listen((message) {
-      _messageController.add(message);
-    }, onError: (error) {
-      print('Erro na reconexão do WebSocket: $error');
-      _reconnect(newChannel, url);
-    });
+    _messageStreamController.close();
   }
 }
