@@ -30,8 +30,8 @@ class NotificationCard extends StatelessWidget {
 
     String formattedDate = timestamp != null ? formatter.format(timestamp) : 'Data desconhecida';
 
-    // Limite de caracteres para a mensagem
     final String message = notification['message'] ?? 'Sem Mensagem';
+    final String? url = notification['url'];
     final String displayMessage = message.length > 50 ? '${message.substring(0, 50)}...' : message;
 
     return Card(
@@ -57,6 +57,17 @@ class NotificationCard extends StatelessWidget {
               displayMessage,
               style: TextStyle(color: Colors.black),
             ),
+            if (url != null) // Exibe a URL, se existir
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0),
+                child: Text(
+                  url,
+                  style: TextStyle(
+                    color: Colors.blue,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+              ),
             SizedBox(height: 4),
             Text(
               formattedDate,
@@ -65,7 +76,7 @@ class NotificationCard extends StatelessWidget {
                 fontSize: 12,
               ),
             ),
-            if (message.length > 50) // Exibe o botão apenas se a mensagem foi cortada
+            if (message.length > 50 || url != null) // Exibe o botão "Ver Detalhes" se a mensagem foi cortada ou há uma URL
               TextButton(
                 onPressed: () {
                   Navigator.pushNamed(

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketService {
@@ -27,7 +26,7 @@ class WebSocketService {
 
     channel.stream.listen(
           (message) {
-        _reconnectAttempts = 0; // Reset de tentativas na primeira mensagem
+        _reconnectAttempts = 0;
         _messageStreamController.add(message);
       },
       onError: (error) {
@@ -50,7 +49,7 @@ class WebSocketService {
   }
 
   int _calculateBackoffTime() {
-    return (_reconnectAttempts > 5) ? 60 : (2 ^ _reconnectAttempts) - 1;
+    return (_reconnectAttempts > 5) ? 60 : (1 << _reconnectAttempts) - 1;
   }
 
   void dispose() {

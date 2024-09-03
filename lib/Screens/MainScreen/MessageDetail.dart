@@ -83,17 +83,7 @@ class MessageDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          Positioned(
-            left: mediaQuery.size.width * 0.03,
-            bottom: mediaQuery.size.height * 0.02,
-            child: FloatingActionButton(
-              onPressed: () {
-                Navigator.pushReplacementNamed(context, PageRoutes.principal);
-              },
-              child: Icon(Icons.home, color: Colors.white),
-              backgroundColor: TColors.primaryColor,
-            ),
-          ),
+
         ],
       ),
     );
