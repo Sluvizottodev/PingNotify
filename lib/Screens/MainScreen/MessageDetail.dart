@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../utils/constants/colors.dart';
-import '../../utils/constants/routes.dart';
 
 class MessageDetailScreen extends StatelessWidget {
   final Map<String, dynamic> notification;
@@ -83,7 +82,6 @@ class MessageDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-
         ],
       ),
     );

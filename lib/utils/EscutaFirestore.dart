@@ -26,6 +26,9 @@ class FirestoreNotificationService {
     if (token != null) {
       print('Token do dispositivo: $token');
       // Salve o token no Firestore, por exemplo, em um campo "deviceTokens"
+      await FirebaseFirestore.instance.collection('users').doc('your_user_id').set({
+        'deviceTokens': FieldValue.arrayUnion([token]),
+      }, SetOptions(merge: true));
     }
   }
 

@@ -1,9 +1,7 @@
 import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../Service/WebSocketService.dart';
 import '../../Service/TagProvider.dart';
 import '../../Service/NtfyService.dart';
@@ -13,6 +11,8 @@ import '../../utils/componentes/NotificationCard.dart';
 import '../../utils/componentes/NotificationsModal.dart';
 import '../../utils/constants/colors.dart';
 import 'package:workmanager/workmanager.dart';
+
+import '../../utils/constants/routes.dart';
 
 class PrincipalScreen extends StatefulWidget {
   @override
@@ -81,18 +81,17 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
         final eventType = decodedMessage['event'] ?? '';
         final timestamp = DateTime.now().toUtc().add(Duration(hours: -3));
 
-        // Filtra notificações irrelevantes
         if (eventType != 'open' && !extractedMessage.contains('result: success, dartTask:')) {
           setState(() {
             _notifications.insert(0, {
               'title': 'Nova Notificação',
-              'message': extractedMessage, // Alterado para usar String ao invés de RichText
+              'message': extractedMessage,
               'timestamp': timestamp.millisecondsSinceEpoch,
             });
           });
 
           _saveNotificationToFirestore('Nova Notificação', extractedMessage, timestamp);
-          _scheduleNotification('Nova Notificação', extractedMessage); // Agenda a notificação
+          _scheduleNotification('Nova Notificação', extractedMessage);
         }
       } catch (e) {
         print('Erro ao decodificar a mensagem: $e');
@@ -151,13 +150,13 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   Future<void> _scheduleNotification(String title, String message) async {
     await Workmanager().registerOneOffTask(
-      'notificationTask', // Identificador da tarefa
-      'notificationTask', // Nome da tarefa
+      'notificationTask',
+      'notificationTask',
       inputData: {
         'title': title,
         'message': message,
       },
-      initialDelay: Duration(seconds: 5), // Adiciona um pequeno atraso para a notificação
+      initialDelay: Duration(seconds: 5),
     );
   }
 
@@ -167,11 +166,15 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final hasNotifications = _notifications.isNotEmpty;
+    final highlightTags = !hasNotifications;
+
     return Scaffold(
-      appBar: AppBarPrincipal(fetchNotifications: _fetchNotifications),
+      appBar: AppBarPrincipal(fetchNotifications: _fetchNotifications, highlightTags: highlightTags),
       backgroundColor: TColors.backgroundLight,
       body: SafeArea(
-        child: Stack(
+        child: hasNotifications
+            ? Stack(
           children: [
             Positioned.fill(
               child: ListView.builder(
@@ -186,6 +189,42 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
               ),
             ),
           ],
+        )
+            : Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Nenhuma notificação disponível.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final selectedTags = await Navigator.pushNamed(context, PageRoutes.tagSelection) as List<String>?;
+                    if (selectedTags != null) {
+                      Provider.of<TagProvider>(context, listen: false).setSelectedTags(selectedTags.toSet());
+                      await _fetchNotifications();
+                    }
+                  },
+                  child: Text(
+                    'Verifique as tags às quais você está inscrito.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: TColors.primaryColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

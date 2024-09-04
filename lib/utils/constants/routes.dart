@@ -16,7 +16,7 @@ class PageRoutes {
   static const String messageDetail = '/message-detail'; // Adicione a nova rota
   static const String cursos = '/cursos';
 
-  static Route<dynamic> generateRoute(RouteSettings settings) {
+  static Route<dynamic>? generateRoute(RouteSettings settings) {
     switch (settings.name) {
       case login:
         return MaterialPageRoute(builder: (_) => LoginScreen());
@@ -29,28 +29,12 @@ class PageRoutes {
       case tagSelection:
         return MaterialPageRoute(builder: (_) => TagSelectionScreen());
       case messageDetail:
-        final notification = settings.arguments as Map<String, dynamic>? ?? {}; // Obtenha argumentos se houver
+        final notification = settings.arguments as Map<String, dynamic>? ?? {};
         return MaterialPageRoute(
           builder: (_) => MessageDetailScreen(notification: notification),
         );
       default:
-        return MaterialPageRoute(builder: (_) => ErrorScreen());
+        return null; // Retorna null se a rota não for encontrada
     }
-  }
-}
-
-class ErrorScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Erro'),
-        backgroundColor: TColors.secondaryColor,
-        elevation: 4,
-      ),
-      body: Center(
-        child: Text('Página não encontrada!'),
-      ),
-    );
   }
 }
