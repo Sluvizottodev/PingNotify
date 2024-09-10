@@ -1,8 +1,17 @@
+import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-import '../../Service/ntfyService.dart';
+import 'package:provider/provider.dart';
+import '../../Service/WebSocketService.dart';
+import '../../Service/TagProvider.dart';
+import '../../Service/NtfyService.dart';
+import '../../utils/WorkmanagerService.dart';
+import '../../utils/componentes/AppBarPrincipal.dart';
+import '../../utils/componentes/NotificationCard.dart';
 import '../../utils/constants/colors.dart';
-import 'Messages.dart';
+import 'package:workmanager/workmanager.dart';
+
+import '../../utils/constants/routes.dart';
 
 class PrincipalScreen extends StatefulWidget {
   @override
@@ -10,168 +19,240 @@ class PrincipalScreen extends StatefulWidget {
 }
 
 class _PrincipalScreenState extends State<PrincipalScreen> {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
-  final NtfyService _ntfyService = NtfyService();
-  List<String> _notifications = [];
+  late NtfyService _ntfyService;
+  late WebSocketService _webSocketService;
+  List<Map<String, dynamic>> _notifications = [];
 
   @override
   void initState() {
     super.initState();
-    _initializeNotifications();
-    _fetchNotifications(); // Buscar notificações iniciais quando a tela é carregada
+    _ntfyService = NtfyService();
+    _initializeApp().then((_) => _initializeWebSocketService());
+    Workmanager().initialize(callbackDispatcher); // Inicializa o WorkManager
   }
 
-  void _initializeNotifications() {
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Nova notificação recebida: ${message.notification?.title}');
-      setState(() {
-        // Adiciona as notificações mais recentes no início da lista
-        _notifications.insert(0, message.notification?.title ?? 'Sem título');
-      });
+  @override
+  void dispose() {
+    _webSocketService.dispose();
+    super.dispose();
+  }
+
+  Future<void> _initializeApp() async {
+    await _fetchUserTags();
+    await _subscribeToTags();
+    await _fetchNotifications();
+  }
+
+  Future<void> _fetchUserTags() async {
+    try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      final userDoc = await FirebaseFirestore.instance.collection('users').doc(tagProvider.deviceId).get();
+      if (userDoc.exists) {
+        final userData = userDoc.data();
+        final tags = List<String>.from(userData?['tags'] ?? []);
+        tagProvider.setSelectedTags(tags.toSet());
+      }
+    } catch (e) {
+      print('Erro ao buscar tags do usuário: $e');
+    }
+  }
+
+  Future<void> _subscribeToTags() async {
+    try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      await _ntfyService.subscribeToTags(tagProvider.selectedTags.toList());
+    } catch (e) {
+      print('Erro ao inscrever-se nas tags: $e');
+    }
+  }
+
+  void _initializeWebSocketService() {
+    final tagProvider = Provider.of<TagProvider>(context, listen: false);
+    final urls = tagProvider.selectedTags.map((tag) => 'wss://ntfy.sh/$tag/ws').toList();
+    _webSocketService = WebSocketService(urls);
+
+    _webSocketService.messages.listen((message) {
+      print('Mensagem recebida via WebSocket: $message');
+
+      try {
+        final decodedMessage = jsonDecode(message) as Map<String, dynamic>;
+        final extractedMessage = decodedMessage['message'] ?? 'Sem Mensagem';
+        final eventType = decodedMessage['event'] ?? '';
+        final timestamp = DateTime.now().toUtc().add(Duration(hours: -3));
+
+        if (eventType != 'open' && !extractedMessage.contains('result: success, dartTask:')) {
+          setState(() {
+            _notifications.insert(0, {
+              'title': 'Nova Notificação',
+              'message': extractedMessage,
+              'timestamp': timestamp.millisecondsSinceEpoch,
+            });
+          });
+
+          _saveNotificationToFirestore('Nova Notificação', extractedMessage, timestamp);
+          _scheduleNotification('Nova Notificação', extractedMessage);
+        }
+      } catch (e) {
+        print('Erro ao decodificar a mensagem: $e');
+      }
     });
 
-    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      Navigator.pushNamed(context, '/notificacaoDetalhes', arguments: message);
-    });
+    // Verifica mensagens não lidas ao abrir o WebSocket
+    _fetchUnreadNotifications();
+  }
+
+  Future<void> _fetchUnreadNotifications() async {
+    try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('tags', arrayContainsAny: tagProvider.selectedTags.toList())
+          .where('read', isEqualTo: false) // Assumindo que há um campo 'read' para controlar o status
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      final unreadNotifications = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        final Timestamp timestamp = data['timestamp'] as Timestamp;
+        return {
+          ...data,
+          'timestamp': timestamp.toDate().millisecondsSinceEpoch,
+        };
+      }).toList();
+
+      setState(() {
+        _notifications.addAll(unreadNotifications);
+      });
+    } catch (e) {
+      print('Erro ao buscar notificações não lidas: $e');
+    }
+  }
+
+  Future<void> _saveNotificationToFirestore(String title, String message, DateTime timestamp) async {
+    try {
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('message', isEqualTo: message)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        print('Mensagem já existe no Firestore. Não salvando novamente.');
+        return;
+      }
+
+      await FirebaseFirestore.instance.collection('notifications').add({
+        'title': title,
+        'message': message,
+        'timestamp': Timestamp.fromDate(timestamp),
+        'tags': Provider.of<TagProvider>(context, listen: false).selectedTags.toList(),
+        'read': false, // Adiciona um campo 'read' para rastreamento
+      });
+    } catch (e) {
+      print('Erro ao salvar notificação no Firestore: $e');
+    }
   }
 
   Future<void> _fetchNotifications() async {
     try {
-      final notifications = await _ntfyService.fetchNotifications();
-      print('Notificações recebidas do servidor: $notifications');
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('tags', arrayContainsAny: tagProvider.selectedTags.toList())
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      final notifications = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        final Timestamp timestamp = data['timestamp'] as Timestamp;
+        return {
+          ...data,
+          'timestamp': timestamp.toDate().millisecondsSinceEpoch,
+        };
+      }).toList();
+
       setState(() {
-        // Adiciona as notificações recebidas do servidor no início da lista
-        _notifications.insertAll(0, notifications);
+        _notifications = notifications;
       });
     } catch (e) {
       print('Erro ao buscar notificações: $e');
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Notificações'),
-        backgroundColor: TColors.secondaryColor,
-        elevation: 4,
-        actions: [
-          IconButton(
-            icon: Icon(Icons.add_alert),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => MessageScreen()),
-              );
-            },
-            color: TColors.textPrimary,
-          ),
-        ],
-        automaticallyImplyLeading: false, // Remove a seta de retorno
-      ),
-      body: Container(
-        color: TColors.backgroundLight,
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: _notifications.isEmpty
-              ? Text(
-            'Nenhuma notificação recebida.',
-            style: TextStyle(
-              color: TColors.textPrimary,
-              fontSize: 16,
-            ),
-          )
-              : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      elevation: 2,
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(16),
-                        title: Text(
-                          _notifications[index],
-                          style: TextStyle(color: TColors.textPrimary),
-                        ),
-                        tileColor: TColors.neutralColor,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/notificacaoDetalhes',
-                            arguments: _notifications[index],
-                          );
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-              SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _showNotificationsDetails,
-                child: Text('Mostrar Todas as Notificações'),
-                style: ElevatedButton.styleFrom(
-                  foregroundColor: TColors.textWhite,
-                  backgroundColor: TColors.primaryColor,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+  Future<void> _scheduleNotification(String title, String message) async {
+    await Workmanager().registerOneOffTask(
+      'notificationTask',
+      'notificationTask',
+      inputData: {
+        'title': title,
+        'message': message,
+      },
+      initialDelay: Duration(seconds: 5),
     );
   }
 
-  void _showNotificationsDetails() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return Container(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                'Todas as Notificações',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: TColors.textPrimary,
-                ),
+  @override
+  Widget build(BuildContext context) {
+    final hasNotifications = _notifications.isNotEmpty;
+    final highlightTags = !hasNotifications;
+
+    return Scaffold(
+      appBar: AppBarPrincipal(fetchNotifications: _fetchNotifications, highlightTags: highlightTags),
+      backgroundColor: TColors.backgroundLight,
+      body: SafeArea(
+        child: hasNotifications
+            ? Stack(
+          children: [
+            Positioned.fill(
+              child: ListView.builder(
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = _notifications[index];
+                  return NotificationCard(
+                    notification: notification,
+                    icon: Icons.notifications,
+                  );
+                },
               ),
-              SizedBox(height: 16),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    return Card(
-                      elevation: 2,
-                      margin: EdgeInsets.symmetric(vertical: 8),
-                      child: ListTile(
-                        contentPadding: EdgeInsets.all(16),
-                        title: Text(
-                          _notifications[index],
-                          style: TextStyle(color: TColors.textPrimary),
-                        ),
-                        tileColor: TColors.neutralColor,
-                      ),
-                    );
+            ),
+          ],
+        )
+            : Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  'Nenhuma notificação disponível.',
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.black54,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 16),
+                InkWell(
+                  onTap: () async {
+                    final selectedTags = await Navigator.pushNamed(context, PageRoutes.tagSelection) as List<String>?;
+                    if (selectedTags != null) {
+                      Provider.of<TagProvider>(context, listen: false).setSelectedTags(selectedTags.toSet());
+                      await _fetchNotifications();
+                    }
                   },
+                  child: Text(
+                    'Verifique as tags às quais você está inscrito.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: TColors.primaryColor,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 }

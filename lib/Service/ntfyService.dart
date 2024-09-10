@@ -1,49 +1,44 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:ntfluttery/ntfluttery.dart';
 
 class NtfyService {
-  final String _topic = 'Info_alertas_nfty'; // Defina seu tópico aqui
+  final NtflutteryService _ntfyClient;
 
-  Future<List<String>> fetchNotifications() async {
-    final url = Uri.parse('https://ntfy.sh/$_topic/json');
-    final response = await http.get(url);
+  NtfyService()
+      : _ntfyClient = NtflutteryService(
+    credentials: Credentials(username: 'XSoftware', password: 'X123456'),
+  );
 
-    if (response.statusCode == 200) {
-      print('Response body: ${response.body}');
-      final List<dynamic> data = jsonDecode(response.body);
-      return data.map((item) => item['message'] as String).toList();
-    } else {
-      print('Failed to load notifications: ${response.statusCode}');
-      throw Exception('Failed to load notifications');
+  Future<void> subscribeToTag(String tag) async {
+    try {
+      final url = 'https://ntfy.sh/$tag/json?poll=1'; // Inscrição em uma tag específica para receber notificações via Ntfy
+
+      final result = await _ntfyClient.get(url);
+
+      print('Mensagens recebidas: $result'); // Mostra as mensagens recebidas da tag
+    } catch (e) {
+      print('Falha ao inscrever na tag $tag: $e'); // Trata possíveis erros ao tentar se inscrever na tag
     }
   }
 
-  Future<void> sendMessage({
-    required String title,
-    required String message,
-    String priority = 'normal',
-    String? tag,
-  }) async {
-    final url = Uri.parse('https://ntfy.sh/$_topic');
-    final payload = {
-      'title': title,
-      'message': message,
-      'priority': priority,
-      // Adiciona a tag apenas se não for null
-      if (tag != null) 'tag': tag,
-    };
+  Future<void> subscribeToTags(List<String> tags) async {
+    for (String tag in tags) {
+      await subscribeToTag(tag); // Inscreve-se em várias tags
+    }
+  }
 
-    final response = await http.post(
-      url,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(payload),
-    );
+  Future<void> unsubscribeFromTag(String tag) async {
+    try {
+      print('Desinscrito da tag $tag'); // Desinscreve-se de uma tag
+    } catch (e) {
+      print('Falha ao desinscrever da tag $tag: $e'); // Trata erros ao desinscrever
+    }
+  }
 
-    if (response.statusCode == 200) {
-      print('Message sent successfully');
-    } else {
-      print('Failed to send message: ${response.statusCode}');
-      throw Exception('Failed to send message');
+  Future<void> sendNotification(String tag, String title, String message) async {
+    try {
+      print('Notificação enviada para a tag $tag com título: $title e mensagem: $message'); // Envia uma notificação para uma tag específica
+    } catch (e) {
+      print('Falha ao enviar notificação para a tag $tag: $e'); // Trata erros ao enviar a notificação
     }
   }
 }
