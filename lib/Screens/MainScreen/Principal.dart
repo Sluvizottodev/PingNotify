@@ -8,7 +8,6 @@ import '../../Service/NtfyService.dart';
 import '../../utils/WorkmanagerService.dart';
 import '../../utils/componentes/AppBarPrincipal.dart';
 import '../../utils/componentes/NotificationCard.dart';
-import '../../utils/componentes/NotificationsModal.dart';
 import '../../utils/constants/colors.dart';
 import 'package:workmanager/workmanager.dart';
 
@@ -97,6 +96,36 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
         print('Erro ao decodificar a mensagem: $e');
       }
     });
+
+    // Verifica mensagens não lidas ao abrir o WebSocket
+    _fetchUnreadNotifications();
+  }
+
+  Future<void> _fetchUnreadNotifications() async {
+    try {
+      final tagProvider = Provider.of<TagProvider>(context, listen: false);
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('notifications')
+          .where('tags', arrayContainsAny: tagProvider.selectedTags.toList())
+          .where('read', isEqualTo: false) // Assumindo que há um campo 'read' para controlar o status
+          .orderBy('timestamp', descending: true)
+          .get();
+
+      final unreadNotifications = querySnapshot.docs.map((doc) {
+        final data = doc.data();
+        final Timestamp timestamp = data['timestamp'] as Timestamp;
+        return {
+          ...data,
+          'timestamp': timestamp.toDate().millisecondsSinceEpoch,
+        };
+      }).toList();
+
+      setState(() {
+        _notifications.addAll(unreadNotifications);
+      });
+    } catch (e) {
+      print('Erro ao buscar notificações não lidas: $e');
+    }
   }
 
   Future<void> _saveNotificationToFirestore(String title, String message, DateTime timestamp) async {
@@ -116,6 +145,7 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
         'message': message,
         'timestamp': Timestamp.fromDate(timestamp),
         'tags': Provider.of<TagProvider>(context, listen: false).selectedTags.toList(),
+        'read': false, // Adiciona um campo 'read' para rastreamento
       });
     } catch (e) {
       print('Erro ao salvar notificação no Firestore: $e');
@@ -158,10 +188,6 @@ class _PrincipalScreenState extends State<PrincipalScreen> {
       },
       initialDelay: Duration(seconds: 5),
     );
-  }
-
-  void _showNotificationsModal() {
-    showNotificationsModal(context, _notifications);
   }
 
   @override

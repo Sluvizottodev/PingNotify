@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart'; // Import para autenticação
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -22,13 +23,24 @@ class FirestoreNotificationService {
   }
 
   void _registerToken() async {
-    String? token = await _fcm.getToken();
-    if (token != null) {
-      print('Token do dispositivo: $token');
-      // Salve o token no Firestore, por exemplo, em um campo "deviceTokens"
-      await FirebaseFirestore.instance.collection('users').doc('your_user_id').set({
-        'deviceTokens': FieldValue.arrayUnion([token]),
-      }, SetOptions(merge: true));
+    // Recupere o usuário autenticado
+    User? user = FirebaseAuth.instance.currentUser;
+
+    // Verifique se o usuário está autenticado
+    if (user != null) {
+      String uid = user.uid; // Pegue o uid do usuário
+
+      // Obtenha o token de notificação
+      String? token = await _fcm.getToken();
+      if (token != null) {
+        print('Token do dispositivo: $token');
+        // Salve o token no Firestore com base no UID do usuário
+        await FirebaseFirestore.instance.collection('users').doc(uid).set({
+          'deviceTokens': FieldValue.arrayUnion([token]),
+        }, SetOptions(merge: true));
+      }
+    } else {
+      print("Nenhum usuário autenticado encontrado.");
     }
   }
 

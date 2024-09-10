@@ -15,47 +15,39 @@ class WebSocketService {
   Stream<String> get messages => _messageStreamController.stream;
 
   void _initializeChannels() {
-    for (String url in urls) {
-      _connect(url);
+    for (final url in urls) {
+      final channel = WebSocketChannel.connect(Uri.parse(url));
+      _channels.add(channel);
+      channel.stream.listen((message) {
+        _messageStreamController.add(message);
+      }, onDone: () {
+        _attemptReconnect(url);
+      }, onError: (error) {
+        print('Erro no canal WebSocket: $error');
+      });
     }
   }
 
-  void _connect(String url) {
-    final channel = WebSocketChannel.connect(Uri.parse(url));
-    _channels.add(channel);
-
-    channel.stream.listen(
-          (message) {
-        _reconnectAttempts = 0;
-        _messageStreamController.add(message);
-      },
-      onError: (error) {
-        print('Erro na conexão do WebSocket ($url): $error');
-        _reconnectWithBackoff(url);
-      },
-      onDone: () {
-        print('Conexão fechada ($url)');
-        _reconnectWithBackoff(url);
-      },
-    );
-  }
-
-  void _reconnectWithBackoff(String url) {
-    final backoffTime = _calculateBackoffTime();
-    _reconnectAttempts += 1;
-    print('Tentando reconectar em $backoffTime segundos...');
-
-    Future.delayed(Duration(seconds: backoffTime), () => _connect(url));
-  }
-
-  int _calculateBackoffTime() {
-    return (_reconnectAttempts > 5) ? 60 : (1 << _reconnectAttempts) - 1;
+  void _attemptReconnect(String url) {
+    if (_reconnectAttempts < 5) {
+      _reconnectAttempts++;
+      Future.delayed(Duration(seconds: 2), () {
+        print('Reconectando ao WebSocket: $url');
+        final channel = WebSocketChannel.connect(Uri.parse(url));
+        _channels.add(channel);
+        channel.stream.listen((message) {
+          _messageStreamController.add(message);
+        });
+      });
+    } else {
+      print('Número máximo de tentativas de reconexão atingido para: $url');
+    }
   }
 
   void dispose() {
+    _messageStreamController.close();
     for (final channel in _channels) {
       channel.sink.close();
     }
-    _messageStreamController.close();
   }
 }

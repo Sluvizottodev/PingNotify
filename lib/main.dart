@@ -21,9 +21,12 @@ void callbackDispatcher() {
     await notificationService.initialize();
 
     webSocketService.messages.listen((message) {
-      // Ignorar mensagens padrão de conexão e outras irrelevantes
+      // Ignorar mensagens padrão de conexão, reconexão ou irrelevantes
       if (!message.contains('result: success, dartTask:') &&
-          !message.contains('event: open')) {
+          !message.contains('event: open') &&
+          !message.contains('reconnecting') &&  // Filtro de mensagens de reconexão
+          !message.contains('connection closed')) {  // Filtro de desconexões
+        // Apenas mensagens relevantes geram notificação
         notificationService.showNotification(
           "Mensagem Recebida",
           message,
