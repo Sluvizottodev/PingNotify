@@ -1,13 +1,13 @@
 {
   "project_info": {
-    "project_number": "935828567019",
-    "project_id": "nfty-push",
-    "storage_bucket": "nfty-push.appspot.com"
+    "project_number": "473895307726",
+    "project_id": "pingnotify0",
+    "storage_bucket": "pingnotify0.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:935828567019:android:baed6f3947860775a69fae",
+        "mobilesdk_app_id": "1:473895307726:android:f54e534fb11fb47e53439f",
         "android_client_info": {
           "package_name": "com.example.nfty"
         }
@@ -15,26 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyC_b-ZQ2mnqdYTll4NS_WsmcFodNkLLlSQ"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:935828567019:android:bbbcf1d96030b8e7a69fae",
-        "android_client_info": {
-          "package_name": "com.nfty.app"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyC_b-ZQ2mnqdYTll4NS_WsmcFodNkLLlSQ"
+          "current_key": "AIzaSyAfp6mLS6ahj8Upb_C0nvMfUpLgXRXKcuY"
         }
       ],
       "services": {

@@ -41,48 +41,49 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCYJMoVfnlZLZfuEZqrPR9usr8GzUxbvfE',
-    appId: '1:935828567019:web:b4bec3e683a5b645a69fae',
-    messagingSenderId: '935828567019',
-    projectId: 'nfty-push',
-    authDomain: 'nfty-push.firebaseapp.com',
-    storageBucket: 'nfty-push.appspot.com',
-    measurementId: 'G-GP11BCLBBH',
+    apiKey: 'AIzaSyA8mIBin1if97r2E2qPoURvavfCyNP__tI',
+    appId: '1:473895307726:web:d514d4919d58846953439f',
+    messagingSenderId: '473895307726',
+    projectId: 'pingnotify0',
+    authDomain: 'pingnotify0.firebaseapp.com',
+    storageBucket: 'pingnotify0.firebasestorage.app',
+    measurementId: 'G-HVEEZQXXRQ',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyC_b-ZQ2mnqdYTll4NS_WsmcFodNkLLlSQ',
-    appId: '1:935828567019:android:bbbcf1d96030b8e7a69fae',
-    messagingSenderId: '935828567019',
-    projectId: 'nfty-push',
-    storageBucket: 'nfty-push.appspot.com',
+    apiKey: 'AIzaSyAfp6mLS6ahj8Upb_C0nvMfUpLgXRXKcuY',
+    appId: '1:473895307726:android:f54e534fb11fb47e53439f',
+    messagingSenderId: '473895307726',
+    projectId: 'pingnotify0',
+    storageBucket: 'pingnotify0.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAOSvIAANZ0UpHZPZ-OvUeOR0NFB1IIWS0',
-    appId: '1:935828567019:ios:2d616f74c7b69f89a69fae',
-    messagingSenderId: '935828567019',
-    projectId: 'nfty-push',
-    storageBucket: 'nfty-push.appspot.com',
+    apiKey: 'AIzaSyALzS9MRhkhxoTINhFJoaezbIThChl_PDM',
+    appId: '1:473895307726:ios:0d25091e37bac66653439f',
+    messagingSenderId: '473895307726',
+    projectId: 'pingnotify0',
+    storageBucket: 'pingnotify0.firebasestorage.app',
     iosBundleId: 'com.example.nfty',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAOSvIAANZ0UpHZPZ-OvUeOR0NFB1IIWS0',
-    appId: '1:935828567019:ios:2d616f74c7b69f89a69fae',
-    messagingSenderId: '935828567019',
-    projectId: 'nfty-push',
-    storageBucket: 'nfty-push.appspot.com',
+    apiKey: 'AIzaSyALzS9MRhkhxoTINhFJoaezbIThChl_PDM',
+    appId: '1:473895307726:ios:0d25091e37bac66653439f',
+    messagingSenderId: '473895307726',
+    projectId: 'pingnotify0',
+    storageBucket: 'pingnotify0.firebasestorage.app',
     iosBundleId: 'com.example.nfty',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyCYJMoVfnlZLZfuEZqrPR9usr8GzUxbvfE',
-    appId: '1:935828567019:web:ec3a7077996566a7a69fae',
-    messagingSenderId: '935828567019',
-    projectId: 'nfty-push',
-    authDomain: 'nfty-push.firebaseapp.com',
-    storageBucket: 'nfty-push.appspot.com',
-    measurementId: 'G-0Q25SJMJRE',
+    apiKey: 'AIzaSyA8mIBin1if97r2E2qPoURvavfCyNP__tI',
+    appId: '1:473895307726:web:fcd4d6ac4d6852b453439f',
+    messagingSenderId: '473895307726',
+    projectId: 'pingnotify0',
+    authDomain: 'pingnotify0.firebaseapp.com',
+    storageBucket: 'pingnotify0.firebasestorage.app',
+    measurementId: 'G-P95157MRRK',
   );
+
 }
