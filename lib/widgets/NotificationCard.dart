@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
-import '../constants/colors.dart';
-import '../constants/routes.dart';
+import '../../utils/constants/colors.dart';
+import '../../utils/constants/routes.dart';
+
 
 class NotificationCard extends StatelessWidget {
   final Map<String, dynamic> notification;

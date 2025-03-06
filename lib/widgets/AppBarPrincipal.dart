@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../Service/TagProvider.dart';
-import '../../utils/constants/colors.dart';
-import '../../utils/constants/routes.dart';
+import '../Service/TagProvider.dart';
+import '../utils/constants/colors.dart';
+import '../utils/constants/routes.dart';
 
 class AppBarPrincipal extends StatelessWidget implements PreferredSizeWidget {
   final Function fetchNotifications;

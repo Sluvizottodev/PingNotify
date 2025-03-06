@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:nfty/Screens/HomeScreen/Cadastro.dart';
-import 'package:nfty/Screens/HomeScreen/Login.dart';
-import 'package:nfty/Screens/MainScreen/Principal.dart';
-import 'package:nfty/Screens/MainScreen/Videos.dart';
 
-import '../../Screens/MainScreen/MessageDetail.dart';
-import '../../Screens/MainScreen/TagSelection.dart';
-import 'colors.dart'; // Atualize o caminho conforme necessário
+import '../../Views/AuthScreen/Cadastro.dart';
+import '../../Views/AuthScreen/Login.dart';
+import '../../Views/MainScreen/MessageDetail.dart';
+import '../../Views/MainScreen/Principal.dart';
+import '../../Views/MainScreen/TagSelection.dart';
+import '../../Views/MainScreen/Videos.dart';
 
 class PageRoutes {
   static const String login = '/login';

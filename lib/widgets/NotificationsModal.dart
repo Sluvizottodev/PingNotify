@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../utils/constants/colors.dart';
+import '../utils/constants/colors.dart';
 import 'NotificationCard.dart';
 
 /// Contém o widget para exibir todas as notificações em um modal.

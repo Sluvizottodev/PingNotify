@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../Service/AuthServiceFire.dart';
-import '../../utils/componentes/TituloBarComp.dart';
 import '../../utils/constants/colors.dart';
 import '../../utils/constants/sizes.dart';
+import '../../widgets/TituloBarComp.dart';
 
 class LoginScreen extends StatefulWidget {
   @override

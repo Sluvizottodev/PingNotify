@@ -86,7 +86,7 @@ class MyApp extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => TagProvider(),
       child: MaterialApp(
-        title: 'Nfty App',
+        title: 'Ping Notify',
         theme: ThemeData(
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,

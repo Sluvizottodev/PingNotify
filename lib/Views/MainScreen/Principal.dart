@@ -6,12 +6,12 @@ import '../../Service/WebSocketService.dart';
 import '../../Service/TagProvider.dart';
 import '../../Service/NtfyService.dart';
 import '../../utils/WorkmanagerService.dart';
-import '../../utils/componentes/AppBarPrincipal.dart';
-import '../../utils/componentes/NotificationCard.dart';
 import '../../utils/constants/colors.dart';
 import 'package:workmanager/workmanager.dart';
 
 import '../../utils/constants/routes.dart';
+import '../../widgets/AppBarPrincipal.dart';
+import '../../widgets/NotificationCard.dart';
 
 class PrincipalScreen extends StatefulWidget {
   @override

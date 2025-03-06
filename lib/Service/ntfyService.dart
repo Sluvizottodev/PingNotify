@@ -5,18 +5,18 @@ class NtfyService {
 
   NtfyService()
       : _ntfyClient = NtflutteryService(
-    credentials: Credentials(username: 'XSoftware', password: 'X123456'),
+    credentials: Credentials(username: 'Luvidev', password: '123456'),
   );
 
   Future<void> subscribeToTag(String tag) async {
     try {
-      final url = 'https://ntfy.sh/$tag/json?poll=1'; // Inscrição em uma tag específica para receber notificações via Ntfy
+      final url = 'https://ntfy.sh/$tag/json?poll=1';
 
       final result = await _ntfyClient.get(url);
 
-      print('Mensagens recebidas: $result'); // Mostra as mensagens recebidas da tag
+      print('Mensagens recebidas: $result');
     } catch (e) {
-      print('Falha ao inscrever na tag $tag: $e'); // Trata possíveis erros ao tentar se inscrever na tag
+      print('Falha ao inscrever na tag $tag: $e');
     }
   }
 
