@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import '../../Service/TagProvider.dart';
-import '../../Service/NtfyService.dart';
+import '../../Service/ntfy/ntfyService.dart';
 import '../../utils/constants/colors.dart';
 import '../../utils/constants/routes.dart';
 

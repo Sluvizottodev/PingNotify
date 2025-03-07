@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../Service/WebSocketService.dart';
 import '../../Service/TagProvider.dart';
-import '../../Service/NtfyService.dart';
+import '../../Service/ntfy/ntfyService.dart';
 import '../../utils/WorkmanagerService.dart';
 import '../../utils/constants/colors.dart';
 import 'package:workmanager/workmanager.dart';
